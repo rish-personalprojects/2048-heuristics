@@ -1,0 +1,1187 @@
+/*Sources
+https://play2048.co/
+https://theresamigler.files.wordpress.com/2020/03/2048.pdf
+https://www.caseyrule.com/projects/2048-ai
+*/
+
+
+//Initialization
+var board = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+var score = 0;
+setProperty("gameOverLabel", "hidden", true);
+function setUp() {
+  setProperty("gameOverLabel", "hidden", true);
+  setProperty("restartButton", "hidden", true);
+  score = 0;
+  prevBoard = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0 ,0]];
+  board = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+  board[randomNumber(0, 3)][randomNumber(0, 3)] = 2;
+  var x = randomNumber(0, 3);
+  var y = randomNumber(0, 3);
+  while (board[x][y] != 0) {
+    x = randomNumber(0, 3);
+    y = randomNumber(0, 3);
+  }
+  board[x][y] = 2;
+  displayBoard(board);
+}
+
+//Check merging
+function merge(dir) {
+  if (dir == "up") {
+    for (var j = 0; j < 4; j++) {
+      for (var i = 0; i < 3; i++) {
+        if (board[i][j] == board[i+1][j]) {
+          board[i+1][j] == 0;
+          board[i][j] *= 2;
+          score += board[i][j];
+          for (var k = i + 1; k < 3; k++) {
+            board[k][j] = board[k+1][j];
+            board[k+1][j] = 0;
+          }
+          board[3][j] = 0;
+        }
+      }
+    }
+  } else if (dir == "down") {
+    for (var j = 0; j < 4; j++) {
+      for (var i = 3; i > 0; i--) {
+        if (board[i][j] == board[i-1][j]) {
+          board[i-1][j] == 0;
+          board[i][j] *= 2;
+          score += board[i][j];
+          for (var k = i-1; k > 0; k--) {
+            board[k][j] = board[k-1][j];
+            board[k-1][j] = 0;
+          }
+          board[0][j] = 0;
+        }
+      }
+    }
+  } else if (dir == "left") {
+    for (var i = 0; i < 4; i++) {
+      for (var j = 0; j < 3; j++) {
+        if (board[i][j] == board[i][j+1]) {
+          board[i][j+1] == 0;
+          board[i][j] *= 2;
+          score += board[i][j];
+          for (var k = j+1; k < 3; k++) {
+            board[i][k] = board[i][k+1];
+            board[i][k+1] = 0;
+          }
+          board[i][3] = 0;
+        }
+      }
+    }
+  } else if (dir == "right") {
+    for (var i = 0; i < 4; i++) {
+      for (var j = 3; j > 0; j--) {
+        if (board[i][j] == board[i][j-1]) {
+          board[i][j-1] == 0;
+          board[i][j] *= 2;
+          score += board[i][j];
+          for (var k = j-1; k > 0; k--) {
+            board[i][k] = board[i][k-1];
+            board[i][k-1] = 0;
+          }
+          board[i][0] = 0;
+        }
+      }
+    }
+  }
+}
+
+//Movement + Merging
+function moveMerge(dir) {
+  if (dir == "up") {
+    for (var p = 0; p < 3; p++) {
+      for (var i = p+1; i >= 1; i--) {
+        for (var j = 0; j < 4; j++) {
+          if (board[i][j] != 0 && board[i-1][j] == 0) {
+            board[i-1][j] = board[i][j];
+            board[i][j] = 0;
+          }
+        }
+      }
+      
+    }
+    merge("up");
+  } else if (dir == "down") {
+    for (var p = 2; p >= 0; p--) {
+      for (var i = 0; i <= p; i++) {
+        for (var j = 0; j < 4; j++) {
+          if (board[i][j] != 0 && board[i+1][j] == 0) {
+            board[i+1][j] = board[i][j];
+            board[i][j] = 0;
+          }
+        }
+      }
+    }
+    merge("down");
+  } else if (dir == "left") {
+    for (var p = 0; p < 3; p++) {
+      for (var j = p+1; j >= 1; j--) {
+        for (var i = 0; i < 4; i++) {
+          if (board[i][j] != 0 && board[i][j-1] == 0) {
+            board[i][j-1] = board[i][j];
+            board[i][j] = 0;
+          }
+        }
+      }
+    }
+    merge("left");
+  } else if (dir == "right") {
+    for (var p = 2; p >= 0; p--) {
+      for (var j = 0; j <= p; j++) {
+        for (var i = 0; i < 4; i++) {
+          if (board[i][j] != 0 && board[i][j+1] == 0) {
+            board[i][j+1] = board[i][j];
+            board[i][j] = 0;
+          }
+        }
+      }
+    }
+    merge("right");
+  }
+}
+
+//Random coord generator
+function randGen() {
+  var genArray = [2, 2, 2, 2, 2, 2, 2, 2, 2, 4];
+    var x = randomNumber(0, 3);
+    var y = randomNumber(0, 3);
+    var test = true;
+    for (var i = 0; i < 4 ; i++) {
+        for (var j = 0; j < 4; j++) {
+          if (board[i][j] == 0) {
+            test = false;
+          }
+        }
+      }
+    if (test == true) {
+      return;
+    } else {
+      while (board[x][y] != 0) {
+        x = randomNumber(0, 3);
+        y = randomNumber(0, 3);
+      }
+      board[x][y] = genArray[randomNumber(0, 9)];
+      setProperty(x.toString() + y.toString(), "border-color", "#000000");
+      setProperty(x.toString() + y.toString(), "border-width", 4);
+    }
+}
+
+//checks if old board is the same as new board
+function movedCheck(board1, board2) {
+  var ans = false;
+  for (var i = 0; i < 4; i++) {
+    for (var j = 0; j < 4; j++) {
+      if (board1[i][j] != board2[i][j]) {
+        ans = true;
+      }
+    }
+  }
+  return ans;
+}
+
+//prints board
+function displayBoard(array) {
+  setText("scoreDisplay", score);
+  
+  for (var i = 0; i < 4; i++) {
+    for (var j = 0; j < 4; j++) {
+      if (array[i][j] != 0) {
+          setProperty(i.toString() + j.toString(), "background-color", "#FFFFFF");
+          setProperty(i.toString() + j.toString(), "text-color", "black");
+          if (array[i][j] == 4) {
+              setProperty(i.toString() + j.toString(), "background-color", "#d7f5b8");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 8) {
+              setProperty(i.toString() + j.toString(), "background-color", "#a8db67");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 16) {
+              setProperty(i.toString() + j.toString(), "background-color", "#8dc942");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 32) {
+              setProperty(i.toString() + j.toString(), "background-color", "#437800");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 64) {
+              setProperty(i.toString() + j.toString(), "background-color", "#163d00");
+              setProperty(i.toString() + j.toString(), "text-color", "white");
+          } else if (array[i][j] == 128) {
+              setProperty(i.toString() + j.toString(), "background-color", "#ffff78");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 256) {
+              setProperty(i.toString() + j.toString(), "background-color", "#e6c929");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 512) {
+              setProperty(i.toString() + j.toString(), "background-color", "#826e00");
+              setProperty(i.toString() + j.toString(), "text-color", "white");
+          } else if (array[i][j] == 1024) {
+              setProperty(i.toString() + j.toString(), "background-color", "#ed952f");
+              setProperty(i.toString() + j.toString(), "text-color", "black");
+          } else if (array[i][j] == 2048) {
+              setProperty(i.toString() + j.toString(), "background-color", "#963f05");
+              setProperty(i.toString() + j.toString(), "text-color", "white");
+          } else if (array[i][j] == 4096) {
+              setProperty(i.toString() + j.toString(), "background-color", "#401f00");
+              setProperty(i.toString() + j.toString(), "text-color", "white");
+          } else if (array[i][j] > 4096) {
+              setProperty(i.toString() + j.toString(), "background-color", "#000000");
+              setProperty(i.toString() + j.toString(), "text-color", "white");
+          }
+          
+          
+          
+          if (array[i][j].toString().length == 1) {
+            setProperty(i.toString() + j.toString(), "font-size", 35);
+            setText(i.toString() + j.toString(), array[i][j]);
+          } else if (array[i][j].toString().length == 2) {
+            setProperty(i.toString() + j.toString(), "font-size", 20);
+            setText(i.toString() + j.toString(), array[i][j]);
+          } else if (array[i][j].toString().length == 3) {
+            setProperty(i.toString() + j.toString(), "font-size", 12);
+            setText(i.toString() + j.toString(), "\n" + array[i][j]);
+          } else if (array[i][j].toString().length == 4) {
+            setProperty(i.toString() + j.toString(), "font-size", 11);
+            setText(i.toString() + j.toString(), "\n" + array[i][j]);
+          } else if (array[i][j].toString().length == 5) {
+            setProperty(i.toString() + j.toString(), "font-size", 8);
+            setText(i.toString() + j.toString(), "\n" + "\n" + array[i][j]);
+          }
+      } else {
+        setText(i.toString() + j.toString(), "");
+        setProperty(i.toString() + j.toString(), "background-color", "#CCCCCC");
+      }
+    }
+  }
+}
+
+//console.log array
+function printBoard(array) {
+  for (var i = 0; i < 4; i++) {
+    var temp = "";
+    for (var j = 0; j < 4; j++) {
+      temp += array[i][j] + " ";
+    }
+    console.log(temp);
+  }
+}
+printBoard([[2, 2, 2, 2], [0, 0, 4, 0], [0, 2, 4, 0], [0, 0, 64, 0]]);
+//sets prevBoard to board without being annoying
+function arrayDuplicate() {
+  for (var i = 0; i < 4; i++) {
+    for (var j = 0; j < 4; j++) {
+      prevBoard[i][j] = board[i][j];
+    }
+  }
+}
+
+//checks if game ended
+function checkGameEnd(array) {
+  var ans = true;
+  for (var i = 0; i < 4; i++) {
+    for (var j = 0; j < 4 ; j++) {
+      if (array[i][j]  == 0) {
+        ans = false;
+      }
+      if (i == 0 && j == 0) {
+        if (array[i+1][j] == array[i][j]) {
+          ans = false;
+        } if (array[i][j+1] == array[i][j]) {
+          ans = false;
+        }
+      } if (i == 3 && j == 0) {
+        if (array[i-1][j] == array[i][j]) {
+          ans = false;
+        } if (array[i][j+1] == array[i][j]) {
+          ans = false;
+        }
+      } if (i == 0 && j == 3) {
+        if (array[i+1][j] == array[i][j]) {
+          ans = false;
+        } if (array[i][j-1] == array[i][j]) {
+          ans = false;
+        }
+      } if (i == 3 && j == 3) {
+        if (array[i-1][j] == array[i][j]) {
+          ans = false;
+        } if (array[i][j-1] == array[i][j]) {
+          ans = false;
+        }
+      }
+      
+      if (i == 0 && j > 0 && j < 4 && array[i+1][j] == array[i][j]) {
+        ans = false;
+      } if (i == 3 && j > 0 && j < 4 && array[i-1][j] == array[i][j]) {
+        ans = false;
+      } if (j == 0 && i > 0 && i < 4 && array[i][j+1] == array[i][j]) {
+        ans = false;
+      } if (j == 3 && i > 0 && i < 4 && array[i][j-1] == array[i][j]) {
+        ans = false;
+      }
+      
+      if (i != 0 && i!= 3 && j!= 0 && j!= 3) {
+        if (array[i+1][j] == array[i][j] || array[i-1][j] == array[i][j] || array[i][j+1] == array[i][j] || array[i][j-1] == array[i][j]) {
+          ans = false;
+        }
+      }
+    }
+  }
+  return ans;
+}
+
+//function in on events to reduce repetition and confusion
+function gameRun(dir) {
+  for (var i = 0; i < 4; i++) {
+    for (var j = 0; j < 4; j++) {
+      setProperty(i.toString() + j.toString(), "border-width", 0);
+    }
+  }
+  arrayDuplicate();
+  displayBoard(board);
+  moveMerge(dir);
+  displayBoard(board);
+  if (movedCheck(prevBoard, board))
+    randGen();
+  if (checkGameEnd(board)) {
+    setProperty("gameOverLabel", "hidden", false);
+    setProperty("restartButton", "hidden", false);
+  }
+  displayBoard(board);
+}
+/*
+function up(a, s) {
+  for (var p = 0; p < 3; p++) {
+    for (var i = p+1; i >= 1; i--) {
+      for (var j = 0; j < 4; j++) {
+        if (a[i][j] != 0 && a[i-1][j] == 0) {
+          a[i-1][j] = a[i][j];
+          a[i][j] = 0;
+        }
+      }
+    }
+  }
+  for (var j = 0; j < 4; j++) {
+    for (var i = 0; i < 3; i++) {
+      if (a[i][j] == a[i+1][j]) {
+        a[i+1][j] == 0;
+        a[i][j] *= 2;
+        s += a[i][j];
+        for (var k = i + 1; k < 3; k++) {
+          a[k][j] = a[k+1][j];
+          a[k+1][j] = 0;
+        }
+        a[3][j] = 0;
+      }
+    }
+  }
+}
+
+function down(a, s) {
+  for (var p = 2; p >= 0; p--) {
+    for (var i = 0; i <= p; i++) {
+      for (var j = 0; j < 4; j++) {
+        if (a[i][j] != 0 && a[i+1][j] == 0) {
+          a[i+1][j] = a[i][j];
+          a[i][j] = 0;
+        }
+      }
+    }
+  }
+  for (var j = 0; j < 4; j++) {
+    for (var i = 3; i > 0; i--) {
+      if (a[i][j] == a[i-1][j]) {
+        a[i-1][j] == 0;
+        a[i][j] *= 2;
+        s += a[i][j];
+        for (var k = i-1; k > 0; k--) {
+          a[k][j] = a[k-1][j];
+          a[k-1][j] = 0;
+        }
+        a[0][j] = 0;
+      }
+    }
+  }
+}
+
+function left(a, s) {
+  for (var p = 0; p < 3; p++) {
+    for (var j = p+1; j >= 1; j--) {
+      for (var i = 0; i < 4; i++) {
+        if (a[i][j] != 0 && a[i][j-1] == 0) {
+          a[i][j-1] = a[i][j];
+          a[i][j] = 0;
+        }
+      }
+    }
+  }
+  for (var i = 0; i < 4; i++) {
+    for (var j = 0; j < 3; j++) {
+      if (a[i][j] == a[i][j+1]) {
+        a[i][j+1] == 0;
+        a[i][j] *= 2;
+        s += a[i][j];
+        for (var k = j+1; k < 3; k++) {
+          a[i][k] = a[i][k+1];
+          a[i][k+1] = 0;
+        }
+        a[i][3] = 0;
+      }
+    }
+  }
+}
+
+function right(a, s) {
+  for (var p = 2; p >= 0; p--) {
+    for (var j = 0; j <= p; j++) {
+      for (var i = 0; i < 4; i++) {
+        if (a[i][j] != 0 && a[i][j+1] == 0) {
+          a[i][j+1] = a[i][j];
+          a[i][j] = 0;
+        }
+      }
+    }
+  }
+  for (var i = 0; i < 4; i++) {
+    for (var j = 3; j > 0; j--) {
+      if (a[i][j] == a[i][j-1]) {
+        a[i][j-1] == 0;
+        a[i][j] *= 2;
+        s += a[i][j];
+        for (var k = j-1; k > 0; k--) {
+          a[i][k] = a[i][k-1];
+          a[i][k-1] = 0;
+        }
+        a[i][0] = 0;
+      }
+    }
+  }
+}
+*/
+
+//BOT FUNCTIONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+var cornerMove = 0;
+var randomMove = 1;
+function botMove(moves) {
+  if (getText("algorithmDropdown") == "Corner") {
+    for (var i = 0; i < moves; i++) {
+      if (checkGameEnd(board) == true) {
+        return;
+      }
+      cornerMove = 1 - cornerMove;
+      if (cornerMove == 1) {
+        gameRun("up");
+      } else {
+        gameRun("right");
+      }
+      
+      if (movedCheck(prevBoard, board) == false) {
+        gameRun("down");
+      } if (movedCheck(prevBoard, board) == false) {
+        gameRun("left");
+      }
+    }
+  } else if (getText("algorithmDropdown") == "Random") {
+    for (var i = 0; i < moves; i++) {
+      if (checkGameEnd(board) == true) {
+        return;
+      }
+      var rand = randomNumber(1, 4);
+      while (rand == randomMove) {
+        rand = randomNumber(1, 4);
+      }
+      randomMove = rand;
+      if (randomMove == 1) {
+        gameRun("up");
+      } else if (randomMove == 2){
+        gameRun("right");
+      } else if (randomMove == 3){
+        gameRun("down");
+      } else {
+        gameRun("left");
+      }
+      
+      if (movedCheck(prevBoard, board) == false) {
+        gameRun("down");
+      } if (movedCheck(prevBoard, board) == false) {
+        gameRun("left");
+      }
+    }
+  } else {
+    for (var m = 0; m < moves; m++) {
+      if (checkGameEnd(board) == true) {
+        return;
+      }
+      var tempBoardUp = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardRight = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardDown = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardLeft = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var scoreUp = 0;
+      var scoreRight = 0;
+      var scoreDown = 0;
+      var scoreLeft = 0;
+      
+      for (var j = 0; j < 4; j++) {
+        for (var k = 0; k < 4; k++) {
+          tempBoardUp[j][k] = board[j][k];
+          tempBoardDown[j][k] = board[j][k];
+          tempBoardLeft[j][k] = board[j][k];
+          tempBoardRight[j][k] = board[j][k];
+        }
+      }
+      
+      
+      
+      //Up
+      for (var p = 0; p < 3; p++) {
+        for (var i = p+1; i >= 1; i--) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardUp[i][j] != 0 && tempBoardUp[i-1][j] == 0) {
+              tempBoardUp[i-1][j] = tempBoardUp[i][j];
+              tempBoardUp[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 3; i++) {
+          if (tempBoardUp[i][j] == tempBoardUp[i+1][j]) {
+            tempBoardUp[i+1][j] == 0;
+            tempBoardUp[i][j] *= 2;
+            scoreUp += tempBoardUp[i][j];
+            for (var k = i + 1; k < 3; k++) {
+              tempBoardUp[k][j] = tempBoardUp[k+1][j];
+              tempBoardUp[k+1][j] = 0;
+            }
+            tempBoardUp[3][j] = 0;
+          }
+        }
+      }
+      
+      var tempBoardUU = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardUR = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardUD = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardUL = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var scoreUU = 0;
+      var scoreUR = 0;
+      var scoreUD = 0;
+      var scoreUL = 0;
+      
+      for (var j = 0; j < 4; j++) {
+        for (var k = 0; k < 4; k++) {
+          tempBoardUU[j][k] = tempBoardUp[j][k];
+          tempBoardUD[j][k] = tempBoardUp[j][k];
+          tempBoardUL[j][k] = tempBoardUp[j][k];
+          tempBoardUR[j][k] = tempBoardUp[j][k];
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var i = p+1; i >= 1; i--) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardUU[i][j] != 0 && tempBoardUU[i-1][j] == 0) {
+              tempBoardUU[i-1][j] = tempBoardUU[i][j];
+              tempBoardUU[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 3; i++) {
+          if (tempBoardUU[i][j] == tempBoardUU[i+1][j]) {
+            tempBoardUU[i+1][j] == 0;
+            tempBoardUU[i][j] *= 2;
+            scoreUU += tempBoardUU[i][j];
+            for (var k = i + 1; k < 3; k++) {
+              tempBoardUU[k][j] = tempBoardUU[k+1][j];
+              tempBoardUU[k+1][j] = 0;
+            }
+            tempBoardUU[3][j] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var i = 0; i <= p; i++) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardUD[i][j] != 0 && tempBoardUD[i+1][j] == 0) {
+              tempBoardUD[i+1][j] = tempBoardUD[i][j];
+              tempBoardUD[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 3; i > 0; i--) {
+          if (tempBoardUD[i][j] == tempBoardUD[i-1][j]) {
+            tempBoardUD[i-1][j] == 0;
+            tempBoardUD[i][j] *= 2;
+            scoreUD += tempBoardUD[i][j];
+            for (var k = i-1; k > 0; k--) {
+              tempBoardUD[k][j] = tempBoardUD[k-1][j];
+              tempBoardUD[k-1][j] = 0;
+            }
+            tempBoardUD[0][j] = 0;
+          }
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var j = p+1; j >= 1; j--) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardUL[i][j] != 0 && tempBoardUL[i][j-1] == 0) {
+              tempBoardUL[i][j-1] = tempBoardUL[i][j];
+              tempBoardUL[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 3; j++) {
+          if (tempBoardUL[i][j] == tempBoardUL[i][j+1]) {
+            tempBoardUL[i][j+1] == 0;
+            tempBoardUL[i][j] *= 2;
+            scoreUL += tempBoardUL[i][j];
+            for (var k = j+1; k < 3; k++) {
+              tempBoardUL[i][k] = tempBoardUL[i][k+1];
+              tempBoardUL[i][k+1] = 0;
+            }
+            tempBoardUL[i][3] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var j = 0; j <= p; j++) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardUR[i][j] != 0 && tempBoardUR[i][j+1] == 0) {
+              tempBoardUR[i][j+1] = tempBoardUR[i][j];
+              tempBoardUR[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 3; j > 0; j--) {
+          if (tempBoardUR[i][j] == tempBoardUR[i][j-1]) {
+            tempBoardUR[i][j-1] == 0;
+            tempBoardUR[i][j] *= 2;
+            scoreUR += tempBoardUR[i][j];
+            for (var k = j-1; k > 0; k--) {
+              tempBoardUR[i][k] = tempBoardUR[i][k-1];
+              tempBoardUR[i][k-1] = 0;
+            }
+            tempBoardUR[i][0] = 0;
+          }
+        }
+      }
+      
+      
+      //Down
+      for (var p = 2; p >= 0; p--) {
+        for (var i = 0; i <= p; i++) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardDown[i][j] != 0 && tempBoardDown[i+1][j] == 0) {
+              tempBoardDown[i+1][j] = tempBoardDown[i][j];
+              tempBoardDown[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 3; i > 0; i--) {
+          if (tempBoardDown[i][j] == tempBoardDown[i-1][j]) {
+            tempBoardDown[i-1][j] == 0;
+            tempBoardDown[i][j] *= 2;
+            scoreDown += tempBoardDown[i][j];
+            for (var k = i-1; k > 0; k--) {
+              tempBoardDown[k][j] = tempBoardDown[k-1][j];
+              tempBoardDown[k-1][j] = 0;
+            }
+            tempBoardDown[0][j] = 0;
+          }
+        }
+      }
+      
+      var tempBoardDU = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardDR = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardDD = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardDL = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var scoreDU = 0;
+      var scoreDR = 0;
+      var scoreDD = 0;
+      var scoreDL = 0;
+      
+      for (var j = 0; j < 4; j++) {
+        for (var k = 0; k < 4; k++) {
+          tempBoardDU[j][k] = tempBoardDown[j][k];
+          tempBoardDD[j][k] = tempBoardDown[j][k];
+          tempBoardDL[j][k] = tempBoardDown[j][k];
+          tempBoardDR[j][k] = tempBoardDown[j][k];
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var i = p+1; i >= 1; i--) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardDU[i][j] != 0 && tempBoardDU[i-1][j] == 0) {
+              tempBoardDU[i-1][j] = tempBoardDU[i][j];
+              tempBoardDU[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 3; i++) {
+          if (tempBoardDU[i][j] == tempBoardDU[i+1][j]) {
+            tempBoardDU[i+1][j] == 0;
+            tempBoardDU[i][j] *= 2;
+            scoreDU += tempBoardDU[i][j];
+            for (var k = i + 1; k < 3; k++) {
+              tempBoardDU[k][j] = tempBoardDU[k+1][j];
+              tempBoardDU[k+1][j] = 0;
+            }
+            tempBoardDU[3][j] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var i = 0; i <= p; i++) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardDD[i][j] != 0 && tempBoardDD[i+1][j] == 0) {
+              tempBoardDD[i+1][j] = tempBoardDD[i][j];
+              tempBoardDD[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 3; i > 0; i--) {
+          if (tempBoardDD[i][j] == tempBoardDD[i-1][j]) {
+            tempBoardDD[i-1][j] == 0;
+            tempBoardDD[i][j] *= 2;
+            scoreDD += tempBoardDD[i][j];
+            for (var k = i-1; k > 0; k--) {
+              tempBoardDD[k][j] = tempBoardDD[k-1][j];
+              tempBoardDD[k-1][j] = 0;
+            }
+            tempBoardDD[0][j] = 0;
+          }
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var j = p+1; j >= 1; j--) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardDL[i][j] != 0 && tempBoardDL[i][j-1] == 0) {
+              tempBoardDL[i][j-1] = tempBoardDL[i][j];
+              tempBoardDL[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 3; j++) {
+          if (tempBoardDL[i][j] == tempBoardDL[i][j+1]) {
+            tempBoardDL[i][j+1] == 0;
+            tempBoardDL[i][j] *= 2;
+            scoreDL += tempBoardDL[i][j];
+            for (var k = j+1; k < 3; k++) {
+              tempBoardDL[i][k] = tempBoardDL[i][k+1];
+              tempBoardDL[i][k+1] = 0;
+            }
+            tempBoardDL[i][3] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var j = 0; j <= p; j++) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardDR[i][j] != 0 && tempBoardDR[i][j+1] == 0) {
+              tempBoardDR[i][j+1] = tempBoardDR[i][j];
+              tempBoardDR[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 3; j > 0; j--) {
+          if (tempBoardDR[i][j] == tempBoardDR[i][j-1]) {
+            tempBoardDR[i][j-1] == 0;
+            tempBoardDR[i][j] *= 2;
+            scoreDR += tempBoardDR[i][j];
+            for (var k = j-1; k > 0; k--) {
+              tempBoardDR[i][k] = tempBoardDR[i][k-1];
+              tempBoardDR[i][k-1] = 0;
+            }
+            tempBoardDR[i][0] = 0;
+          }
+        }
+      }
+      
+      //Left
+      for (var p = 0; p < 3; p++) {
+        for (var j = p+1; j >= 1; j--) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardLeft[i][j] != 0 && tempBoardLeft[i][j-1] == 0) {
+              tempBoardLeft[i][j-1] = tempBoardLeft[i][j];
+              tempBoardLeft[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 3; j++) {
+          if (tempBoardLeft[i][j] == tempBoardLeft[i][j+1]) {
+            tempBoardLeft[i][j+1] == 0;
+            tempBoardLeft[i][j] *= 2;
+            scoreLeft += tempBoardLeft[i][j];
+            for (var k = j+1; k < 3; k++) {
+              tempBoardLeft[i][k] = tempBoardLeft[i][k+1];
+              tempBoardLeft[i][k+1] = 0;
+            }
+            tempBoardLeft[i][3] = 0;
+          }
+        }
+      }
+      
+      var tempBoardLU = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardLR = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardLD = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardLL = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var scoreLU = 0;
+      var scoreLR = 0;
+      var scoreLD = 0;
+      var scoreLL = 0;
+      
+      for (var j = 0; j < 4; j++) {
+        for (var k = 0; k < 4; k++) {
+          tempBoardLU[j][k] = tempBoardLeft[j][k];
+          tempBoardLD[j][k] = tempBoardLeft[j][k];
+          tempBoardLL[j][k] = tempBoardLeft[j][k];
+          tempBoardLR[j][k] = tempBoardLeft[j][k];
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var i = p+1; i >= 1; i--) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardLU[i][j] != 0 && tempBoardLU[i-1][j] == 0) {
+              tempBoardLU[i-1][j] = tempBoardLU[i][j];
+              tempBoardLU[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 3; i++) {
+          if (tempBoardLU[i][j] == tempBoardLU[i+1][j]) {
+            tempBoardLU[i+1][j] == 0;
+            tempBoardLU[i][j] *= 2;
+            scoreLU += tempBoardLU[i][j];
+            for (var k = i + 1; k < 3; k++) {
+              tempBoardLU[k][j] = tempBoardLU[k+1][j];
+              tempBoardLU[k+1][j] = 0;
+            }
+            tempBoardLU[3][j] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var i = 0; i <= p; i++) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardLD[i][j] != 0 && tempBoardLD[i+1][j] == 0) {
+              tempBoardLD[i+1][j] = tempBoardLD[i][j];
+              tempBoardLD[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 3; i > 0; i--) {
+          if (tempBoardLD[i][j] == tempBoardLD[i-1][j]) {
+            tempBoardLD[i-1][j] == 0;
+            tempBoardLD[i][j] *= 2;
+            scoreLD += tempBoardLD[i][j];
+            for (var k = i-1; k > 0; k--) {
+              tempBoardLD[k][j] = tempBoardLD[k-1][j];
+              tempBoardLD[k-1][j] = 0;
+            }
+            tempBoardLD[0][j] = 0;
+          }
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var j = p+1; j >= 1; j--) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardLL[i][j] != 0 && tempBoardLL[i][j-1] == 0) {
+              tempBoardLL[i][j-1] = tempBoardLL[i][j];
+              tempBoardLL[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 3; j++) {
+          if (tempBoardLL[i][j] == tempBoardLL[i][j+1]) {
+            tempBoardLL[i][j+1] == 0;
+            tempBoardLL[i][j] *= 2;
+            scoreLL += tempBoardLL[i][j];
+            for (var k = j+1; k < 3; k++) {
+              tempBoardLL[i][k] = tempBoardLL[i][k+1];
+              tempBoardLL[i][k+1] = 0;
+            }
+            tempBoardLL[i][3] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var j = 0; j <= p; j++) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardLR[i][j] != 0 && tempBoardLR[i][j+1] == 0) {
+              tempBoardLR[i][j+1] = tempBoardLR[i][j];
+              tempBoardLR[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 3; j > 0; j--) {
+          if (tempBoardLR[i][j] == tempBoardLR[i][j-1]) {
+            tempBoardLR[i][j-1] == 0;
+            tempBoardLR[i][j] *= 2;
+            scoreLR += tempBoardLR[i][j];
+            for (var k = j-1; k > 0; k--) {
+              tempBoardLR[i][k] = tempBoardLR[i][k-1];
+              tempBoardLR[i][k-1] = 0;
+            }
+            tempBoardLR[i][0] = 0;
+          }
+        }
+      }
+      
+      
+      //Right
+      for (var p = 2; p >= 0; p--) {
+        for (var j = 0; j <= p; j++) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardRight[i][j] != 0 && tempBoardRight[i][j+1] == 0) {
+              tempBoardRight[i][j+1] = tempBoardRight[i][j];
+              tempBoardRight[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 3; j > 0; j--) {
+          if (tempBoardRight[i][j] == tempBoardRight[i][j-1]) {
+            tempBoardRight[i][j-1] == 0;
+            tempBoardRight[i][j] *= 2;
+            scoreRight += tempBoardRight[i][j];
+            for (var k = j-1; k > 0; k--) {
+              tempBoardRight[i][k] = tempBoardRight[i][k-1];
+              tempBoardRight[i][k-1] = 0;
+            }
+            tempBoardRight[i][0] = 0;
+          }
+        }
+      }
+      
+      var tempBoardRU = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardRR = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardRD = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var tempBoardRL = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+      var scoreRU = 0;
+      var scoreRR = 0;
+      var scoreRD = 0;
+      var scoreRL = 0;
+      
+      for (var j = 0; j < 4; j++) {
+        for (var k = 0; k < 4; k++) {
+          tempBoardRU[j][k] = tempBoardRight[j][k];
+          tempBoardRD[j][k] = tempBoardRight[j][k];
+          tempBoardRL[j][k] = tempBoardRight[j][k];
+          tempBoardRR[j][k] = tempBoardRight[j][k];
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var i = p+1; i >= 1; i--) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardRU[i][j] != 0 && tempBoardRU[i-1][j] == 0) {
+              tempBoardRU[i-1][j] = tempBoardRU[i][j];
+              tempBoardRU[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 0; i < 3; i++) {
+          if (tempBoardRU[i][j] == tempBoardRU[i+1][j]) {
+            tempBoardRU[i+1][j] == 0;
+            tempBoardRU[i][j] *= 2;
+            scoreRU += tempBoardRU[i][j];
+            for (var k = i + 1; k < 3; k++) {
+              tempBoardRU[k][j] = tempBoardRU[k+1][j];
+              tempBoardRU[k+1][j] = 0;
+            }
+            tempBoardRU[3][j] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var i = 0; i <= p; i++) {
+          for (var j = 0; j < 4; j++) {
+            if (tempBoardRD[i][j] != 0 && tempBoardRD[i+1][j] == 0) {
+              tempBoardRD[i+1][j] = tempBoardRD[i][j];
+              tempBoardRD[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var j = 0; j < 4; j++) {
+        for (var i = 3; i > 0; i--) {
+          if (tempBoardRD[i][j] == tempBoardRD[i-1][j]) {
+            tempBoardRD[i-1][j] == 0;
+            tempBoardRD[i][j] *= 2;
+            scoreRD += tempBoardRD[i][j];
+            for (var k = i-1; k > 0; k--) {
+              tempBoardRD[k][j] = tempBoardRD[k-1][j];
+              tempBoardRD[k-1][j] = 0;
+            }
+            tempBoardRD[0][j] = 0;
+          }
+        }
+      }
+      for (var p = 0; p < 3; p++) {
+        for (var j = p+1; j >= 1; j--) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardRL[i][j] != 0 && tempBoardRL[i][j-1] == 0) {
+              tempBoardRL[i][j-1] = tempBoardRL[i][j];
+              tempBoardRL[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 0; j < 3; j++) {
+          if (tempBoardRL[i][j] == tempBoardRL[i][j+1]) {
+            tempBoardRL[i][j+1] == 0;
+            tempBoardRL[i][j] *= 2;
+            scoreRL += tempBoardRL[i][j];
+            for (var k = j+1; k < 3; k++) {
+              tempBoardRL[i][k] = tempBoardRL[i][k+1];
+              tempBoardRL[i][k+1] = 0;
+            }
+            tempBoardRL[i][3] = 0;
+          }
+        }
+      }
+      for (var p = 2; p >= 0; p--) {
+        for (var j = 0; j <= p; j++) {
+          for (var i = 0; i < 4; i++) {
+            if (tempBoardRR[i][j] != 0 && tempBoardRR[i][j+1] == 0) {
+              tempBoardRR[i][j+1] = tempBoardRR[i][j];
+              tempBoardRR[i][j] = 0;
+            }
+          }
+        }
+      }
+      for (var i = 0; i < 4; i++) {
+        for (var j = 3; j > 0; j--) {
+          if (tempBoardRR[i][j] == tempBoardRR[i][j-1]) {
+            tempBoardRR[i][j-1] == 0;
+            tempBoardRR[i][j] *= 2;
+            scoreRR += tempBoardRR[i][j];
+            for (var k = j-1; k > 0; k--) {
+              tempBoardRR[i][k] = tempBoardRR[i][k-1];
+              tempBoardRR[i][k-1] = 0;
+            }
+            tempBoardRR[i][0] = 0;
+          }
+        }
+      }
+      
+      scoreUp = Math.max(scoreUU, scoreUR, scoreUD, scoreUL);
+      scoreDown = Math.max(scoreDU, scoreDR, scoreDD, scoreDL);
+      scoreLeft = Math.max(scoreLU, scoreLR, scoreLD, scoreLL);
+      scoreRight = Math.max(scoreRU, scoreRR, scoreRD, scoreRL);
+      var maxScore = Math.max(scoreUp, scoreDown, scoreLeft, scoreRight);
+      
+      if (scoreUp == maxScore) {
+        gameRun("up");
+
+        if (movedCheck(prevBoard, board) == false) {
+          gameRun("right");
+        } if (movedCheck(prevBoard, board) == false) {
+          gameRun("down");
+        } if (movedCheck(prevBoard, board) == false) {
+          gameRun("left");
+        }
+      } else if (scoreRight == maxScore) {
+        gameRun("right");
+        if (movedCheck(prevBoard, board) == false) {
+          gameRun("up");
+        } if (movedCheck(prevBoard, board) == false) {
+          gameRun("left");
+        } if (movedCheck(prevBoard, board) == false) {
+          gameRun("down");
+        }
+      } else {
+        if (scoreRight >= scoreUp) {
+          gameRun("right");
+        } else {
+          gameRun("up");
+        }
+        if (movedCheck(prevBoard, board) == false) {
+          gameRun("down");
+        } if (movedCheck(prevBoard, board) == false) {
+          gameRun("left");
+        }
+      }
+      
+    }
+  }
+}
+
+
+setUp();
+var prevBoard = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
+displayBoard(board);
+
+
+
+onEvent("up", "click", function( ) {
+  gameRun("up");
+});
+
+onEvent("down", "click", function( ) {
+  gameRun("down");
+});
+
+onEvent("left", "click", function( ) {
+  gameRun("left");
+});
+
+onEvent("right", "click", function( ) {
+  gameRun("right");
+});
+
+onEvent("restartButton", "click", function( ) {
+  setUp();
+});
+
+onEvent("nextBotMoveButton", "click", function( ) {
+  botMove(1);
+});
+
+onEvent("next10BotMoveButton", "click", function( ) {
+  botMove(10);
+});
+
+onEvent("allBotMoveButton", "click", function( ) {
+  while (checkGameEnd(board) == false) {
+    botMove(100);
+  }
+});
+
+
+//CALLS:
+//board = [[0, 2, 4, 8], [16, 32, 64, 128], [256, 512, 1024, 2048], [4096, 8192, 16384, 32768]];
+//displayBoard(board);
+
+//prevboard = [[0, 0, 0, 0], [2, 2, 2, 2], [4, 4, 4, 4], [8, 8, 8, 8]];
+//displayBoard(prevBoard);
